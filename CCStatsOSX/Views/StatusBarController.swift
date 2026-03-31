@@ -235,7 +235,7 @@ class StatusBarController: ObservableObject {
     private func inlineBarAttachment(utilization: Double) -> NSAttributedString {
         let barWidth: CGFloat = 5
         let barHeight: CGFloat = 14
-        let totalHeight: CGFloat = 16
+        let totalHeight: CGFloat = 18
 
         let image = NSImage(size: NSSize(width: barWidth + 2, height: totalHeight))
         image.lockFocus()
@@ -262,7 +262,7 @@ class StatusBarController: ObservableObject {
 
         let attachment = NSTextAttachment()
         attachment.image = image
-        attachment.bounds = NSRect(x: 0, y: -3, width: barWidth + 2, height: totalHeight)
+        attachment.bounds = NSRect(x: 0, y: -4, width: barWidth + 2, height: totalHeight)
         return NSAttributedString(attachment: attachment)
     }
 
@@ -297,9 +297,7 @@ class StatusBarController: ObservableObject {
         let fiveHourUtil = data.fiveHour?.utilization ?? 0
         let sevenDayUtil = data.sevenDay?.utilization ?? 0
 
-        // 5h bar as the leading icon
-        button.image = drawMiniBar(utilization: fiveHourUtil)
-        button.image?.size = NSSize(width: 7, height: 18)
+        button.image = nil
 
         let attributed = NSMutableAttributedString()
 
@@ -311,8 +309,9 @@ class StatusBarController: ObservableObject {
 
         switch settings.menuBarDisplayMode {
         case .full:
-            // 5h label + percentage
+            // 5h bar + label + percentage
             if settings.showFiveHourPercent {
+                attributed.append(inlineBarAttachment(utilization: fiveHourUtil))
                 attributed.append(NSAttributedString(string: " 5H ", attributes: [
                     .font: labelFont,
                     .foregroundColor: textColor
@@ -356,6 +355,7 @@ class StatusBarController: ObservableObject {
 
         case .minimal:
             if settings.showFiveHourPercent {
+                attributed.append(inlineBarAttachment(utilization: fiveHourUtil))
                 attributed.append(NSAttributedString(string: " 5H ", attributes: [
                     .font: labelFont,
                     .foregroundColor: textColor
@@ -374,7 +374,8 @@ class StatusBarController: ObservableObject {
             }
 
         case .iconOnly:
-            attributed.append(NSAttributedString(string: " ", attributes: [.font: NSFont.systemFont(ofSize: 4)]))
+            attributed.append(inlineBarAttachment(utilization: fiveHourUtil))
+            attributed.append(NSAttributedString(string: " ", attributes: [.font: NSFont.systemFont(ofSize: 2)]))
             attributed.append(inlineBarAttachment(utilization: sevenDayUtil))
         }
 

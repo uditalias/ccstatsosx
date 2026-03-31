@@ -5,7 +5,71 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CCStatsOSX — Claude Usage in Your Menu Bar</title>
   <meta name="description" content="Monitor your Claude AI rate limits at a glance. A native macOS menu bar app that tracks usage across all Claude services.">
+  <meta name="author" content="Udi Talias">
+  <meta name="keywords" content="Claude, Claude AI, Claude Code, rate limits, usage tracker, macOS, menu bar, Anthropic, developer tools">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#0C0A09">
+  <meta name="color-scheme" content="dark">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CCStatsOSX — Claude Usage in Your Menu Bar">
+  <meta property="og:description" content="Monitor your Claude AI rate limits at a glance. A native macOS menu bar app that tracks usage across all Claude services.">
+  <meta property="og:image" content="https://uditalias.github.io/ccstatsosx/assets/screenshot.png">
+  <meta property="og:image:alt" content="CCStatsOSX menu bar app showing Claude usage statistics">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://uditalias.github.io/ccstatsosx">
+  <meta property="og:site_name" content="CCStatsOSX">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CCStatsOSX — Claude Usage in Your Menu Bar">
+  <meta name="twitter:description" content="Monitor your Claude AI rate limits at a glance. A native macOS menu bar app that tracks usage across all Claude services.">
+  <meta name="twitter:image" content="https://uditalias.github.io/ccstatsosx/assets/screenshot.png">
+  <meta name="twitter:image:alt" content="CCStatsOSX menu bar app showing Claude usage statistics">
+
+  <!-- Apple -->
+  <meta name="apple-mobile-web-app-title" content="CCStatsOSX">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="./assets/icon.png">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://uditalias.github.io/ccstatsosx">
+
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="./assets/icon.png">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CCStatsOSX",
+    "description": "Monitor your Claude AI rate limits at a glance. A native macOS menu bar app that tracks usage across all Claude services.",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "macOS 13+",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "softwareVersion": "1.0.0",
+    "fileSize": "3MB",
+    "downloadUrl": "https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX.dmg",
+    "screenshot": "https://uditalias.github.io/ccstatsosx/assets/screenshot.png",
+    "author": {
+      "@type": "Person",
+      "name": "Udi Talias",
+      "url": "https://github.com/uditalias"
+    },
+    "license": "https://github.com/uditalias/ccstatsosx/blob/main/LICENSE",
+    "url": "https://uditalias.github.io/ccstatsosx",
+    "image": "https://uditalias.github.io/ccstatsosx/assets/icon.png"
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poly:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -152,6 +216,42 @@
       cursor: pointer; text-decoration: none; transition: all 0.3s;
       box-shadow: 0 4px 20px rgba(199,97,58,0.3);
     }
+    @property --border-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+    @keyframes border-shimmer { 0%{--border-angle:0deg} 100%{--border-angle:360deg} }
+
+    .btn-primary { position: relative; overflow: hidden; }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: 2px;
+      background: conic-gradient(
+        from var(--border-angle),
+        transparent 0deg,
+        transparent 240deg,
+        rgba(255,200,160,0.7) 270deg,
+        rgba(255,255,255,0.5) 300deg,
+        transparent 360deg
+      );
+      mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      mask-composite: exclude;
+      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: destination-out;
+      pointer-events: none;
+      animation: border-shimmer 4s linear infinite;
+      z-index: 1;
+    }
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      animation: shimmer 5s ease-in-out infinite;
+    }
+    @keyframes shimmer { 0%{left:-100%} 30%{left:150%} 100%{left:150%} }
     .btn-primary:hover { background: var(--claude-light); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(199,97,58,0.4); }
     .btn-primary svg { width: 18px; height: 18px; }
 
