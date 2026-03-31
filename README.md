@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Claude usage stats in your macOS menu bar</strong><br>
-  Monitor your Claude AI rate limits at a glance — no clicks needed.
+  Monitor your Claude AI rate limits at a glance — across all services, no clicks needed.
 </p>
 
 <p align="center">
@@ -15,14 +15,16 @@
 
 ## What it does
 
-CCStatsOSX sits in your macOS menu bar and shows your Claude usage in real-time:
+Your Claude usage is shared across **all services** — Claude Code, claude.ai web, Desktop app, and Cowork. CCStatsOSX gives you one place to see it all without opening a browser.
+
+It sits in your macOS menu bar and shows your usage in real-time:
 
 - **5-hour session** utilization with countdown timer
 - **7-day weekly** utilization across all models
 - **Per-model breakdown** (Sonnet, Opus, Cowork) when available
 - Color-coded warnings at configurable thresholds
 
-Click the menu bar item to see a detailed breakdown, or just glance at the live percentages and timers.
+Click the menu bar item to see a detailed breakdown, or just glance at the live percentages and timers. The data reflects your **total account usage** — whether you're chatting on the web, coding in Claude Code, or collaborating in Cowork.
 
 ## Requirements
 

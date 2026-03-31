@@ -68,8 +68,17 @@ echo "  DMG: $DMG_PATH ($DMG_SIZE)"
 echo "========================================="
 echo ""
 
-# Offer to create GitHub release
-read -p "Create GitHub release? [y/N] " GH_RELEASE
+# Commit version bump
+echo "Committing version bump..."
+git add "$PLIST"
+git commit -m "Release v$NEW_VERSION"
+
+TAG="v$NEW_VERSION"
+git tag "$TAG"
+echo "Tagged $TAG"
+
+# Offer to push and create GitHub release
+read -p "Push and create GitHub release? [y/N] " GH_RELEASE
 GH_RELEASE=${GH_RELEASE:-N}
 
 if [[ "$GH_RELEASE" =~ ^[Yy] ]]; then
@@ -78,19 +87,20 @@ if [[ "$GH_RELEASE" =~ ^[Yy] ]]; then
         exit 1
     fi
 
+    echo "Pushing to origin..."
+    git push origin main --tags
+
     # Generate release notes from git log
-    LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-    if [ -n "$LAST_TAG" ]; then
-        NOTES=$(git log "$LAST_TAG"..HEAD --oneline --no-decorate)
+    PREV_TAG=$(git describe --tags --abbrev=0 "$TAG^" 2>/dev/null || echo "")
+    if [ -n "$PREV_TAG" ]; then
+        NOTES=$(git log "$PREV_TAG".."$TAG" --oneline --no-decorate)
     else
         NOTES=$(git log --oneline --no-decorate -20)
     fi
 
-    TAG="v$NEW_VERSION"
-
-    echo "Creating release $TAG..."
+    echo "Creating GitHub release $TAG..."
     gh release create "$TAG" \
-        "$DMG_PATH#CCStatsOSX.dmg" \
+        "$DMG_PATH#CCStatsOSX-v${NEW_VERSION}.dmg" \
         --title "CCStatsOSX v$NEW_VERSION" \
         --notes "## Changes
 
@@ -98,7 +108,7 @@ $NOTES
 
 ## Install
 
-Download \`CCStatsOSX.dmg\`, open it, and drag the app to \`/Applications\`.
+Download \`CCStatsOSX-v${NEW_VERSION}.dmg\`, open it, and drag the app to \`/Applications\`.
 
 Requires macOS 13 (Ventura) or later and Claude Code installed."
 
@@ -106,9 +116,6 @@ Requires macOS 13 (Ventura) or later and Claude Code installed."
     echo "Release created: $(gh release view "$TAG" --json url -q .url)"
 else
     echo ""
-    echo "To release manually:"
-    echo "  git add -A && git commit -m \"Release v$NEW_VERSION\""
-    echo "  git tag v$NEW_VERSION"
+    echo "Committed and tagged locally. To push:"
     echo "  git push origin main --tags"
-    echo "  gh release create v$NEW_VERSION $DMG_PATH --title \"CCStatsOSX v$NEW_VERSION\""
 fi
