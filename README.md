@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX-v1.0.0.dmg">
+  <a href="https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX.dmg">
     <img src="https://img.shields.io/badge/Download-CCStatsOSX_v1.0.0-C7613A?style=for-the-badge&logo=apple&logoColor=white" alt="Download CCStatsOSX">
   </a>
 </p>

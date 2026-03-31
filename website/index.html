@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CCStatsOSX — Claude Usage in Your Menu Bar</title>
+  <meta name="description" content="Monitor your Claude AI rate limits at a glance. A native macOS menu bar app that tracks usage across all Claude services.">
+  <link rel="icon" type="image/png" href="../assets/icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --claude: #C7613A;
+      --claude-light: #D4845F;
+      --claude-glow: rgba(199, 97, 58, 0.4);
+      --bg: #0C0A09;
+      --card: rgba(255,255,255,0.03);
+      --card-hover: rgba(255,255,255,0.06);
+      --text: #FAF5F0;
+      --text2: rgba(250,245,240,0.55);
+      --text3: rgba(250,245,240,0.3);
+      --border: rgba(255,255,255,0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--bg); }
+
+    body {
+      font-family: 'Outfit', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Grain */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 10000;
+    }
+
+    /* Glow orbs */
+    .glow { position: absolute; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+    .glow-1 { width: 600px; height: 600px; background: radial-gradient(circle, var(--claude-glow) 0%, transparent 70%); top: -200px; left: 50%; transform: translateX(-50%); animation: gfloat 8s ease-in-out infinite; }
+    .glow-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(199,97,58,0.15) 0%, transparent 70%); top: 60%; right: -100px; animation: gfloat 12s ease-in-out infinite reverse; }
+    .glow-3 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(212,132,95,0.1) 0%, transparent 70%); bottom: 10%; left: -150px; animation: gfloat 10s ease-in-out infinite; }
+    @keyframes gfloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
+
+    /* Nav */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 14px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.3s, border-color 0.3s;
+      border-bottom: 1px solid transparent;
+    }
+
+    nav.scrolled {
+      background: rgba(12,10,9,0.8);
+      backdrop-filter: blur(20px) saturate(1.5);
+      -webkit-backdrop-filter: blur(20px) saturate(1.5);
+      border-bottom-color: var(--border);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .nav-brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .nav-brand span { font-weight: 600; font-size: 15px; letter-spacing: -0.3px; }
+
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-download {
+      background: var(--claude) !important;
+      color: white !important;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 500 !important;
+      transition: all 0.2s;
+    }
+    .nav-download:hover { background: var(--claude-light) !important; transform: translateY(-1px); }
+
+    /* Sections */
+    section { position: relative; max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding-top: 80px;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 6px 16px; border-radius: 100px;
+      border: 1px solid var(--border); background: var(--card);
+      font-size: 13px; color: var(--text2); margin-bottom: 32px;
+      animation: fadeUp 0.8s ease forwards; opacity: 0;
+    }
+    .hero-badge .dot { width: 6px; height: 6px; background: #4ade80; border-radius: 50%; animation: pulse 2s ease infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+
+    .hero-icon {
+      width: 96px; height: 96px; border-radius: 22px; margin-bottom: 32px;
+      animation: fadeUp 0.8s ease 0.1s forwards; opacity: 0;
+      box-shadow: 0 20px 60px rgba(199,97,58,0.3), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .hero h1 {
+      font-family: 'DM Serif Display', Georgia, serif;
+      font-size: clamp(48px, 7vw, 80px); font-weight: 400;
+      line-height: 1.05; letter-spacing: -2px; margin-bottom: 24px;
+      animation: fadeUp 0.8s ease 0.2s forwards; opacity: 0;
+    }
+    .hero h1 .accent { color: var(--claude); font-style: italic; }
+
+    .hero p {
+      font-size: 18px; line-height: 1.6; color: var(--text2);
+      max-width: 520px; margin-bottom: 40px;
+      animation: fadeUp 0.8s ease 0.3s forwards; opacity: 0;
+    }
+
+    .hero-cta {
+      display: flex; align-items: center; gap: 16px;
+      animation: fadeUp 0.8s ease 0.4s forwards; opacity: 0;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 14px 32px; background: var(--claude); color: white; border: none; border-radius: 12px;
+      font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 600;
+      cursor: pointer; text-decoration: none; transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(199,97,58,0.3);
+    }
+    .btn-primary:hover { background: var(--claude-light); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(199,97,58,0.4); }
+    .btn-primary svg { width: 18px; height: 18px; }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; background: var(--card); color: var(--text);
+      border: 1px solid var(--border); border-radius: 12px;
+      font-family: 'Outfit', sans-serif; font-size: 16px; font-weight: 500;
+      cursor: pointer; text-decoration: none; transition: all 0.3s;
+    }
+    .btn-secondary:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.12); transform: translateY(-2px); }
+
+    .hero-version {
+      margin-top: 16px; font-size: 13px; color: var(--text3);
+      animation: fadeUp 0.8s ease 0.5s forwards; opacity: 0;
+    }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Screenshot */
+    .screenshot-section { padding: 40px 40px 120px; }
+    .screenshot-wrapper {
+      position: relative; max-width: 800px; margin: 0 auto;
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05), 0 0 120px rgba(199,97,58,0.1);
+      animation: fadeUp 0.8s ease 0.6s forwards; opacity: 0;
+    }
+    .screenshot-wrapper img { width: 100%; display: block; }
+
+    /* Features */
+    .features { padding: 120px 40px; }
+    .section-label { display: inline-block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--claude); margin-bottom: 16px; }
+    .section-title { font-family: 'DM Serif Display', Georgia, serif; font-size: clamp(32px,4vw,48px); font-weight: 400; letter-spacing: -1px; margin-bottom: 16px; }
+    .section-subtitle { font-size: 17px; color: var(--text2); max-width: 500px; line-height: 1.6; margin-bottom: 64px; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    .feature-card { padding: 32px 28px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; transition: all 0.3s; }
+    .feature-card:hover { background: var(--card-hover); border-color: rgba(199,97,58,0.2); transform: translateY(-4px); }
+    .feature-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(199,97,58,0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px; }
+    .feature-card h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.3px; }
+    .feature-card p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+    /* How it works */
+    .how-it-works { padding: 120px 40px; }
+    .steps { display: flex; flex-direction: column; max-width: 600px; }
+    .step { display: flex; gap: 24px; padding: 32px 0; border-bottom: 1px solid var(--border); }
+    .step:last-child { border-bottom: none; }
+    .step-num { font-family: 'DM Serif Display', Georgia, serif; font-size: 40px; color: var(--claude); line-height: 1; min-width: 48px; opacity: 0.6; }
+    .step h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.3px; }
+    .step p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+
+    /* Download CTA */
+    .download-section { padding: 120px 40px; text-align: center; }
+    .download-card {
+      max-width: 600px; margin: 0 auto; padding: 64px 48px;
+      background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+      position: relative; overflow: hidden;
+    }
+    .download-card::before { content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 400px; height: 200px; background: radial-gradient(ellipse, rgba(199,97,58,0.15) 0%, transparent 70%); pointer-events: none; }
+    .download-card h2 { font-family: 'DM Serif Display', Georgia, serif; font-size: 36px; font-weight: 400; letter-spacing: -1px; margin-bottom: 12px; position: relative; }
+    .download-card p { color: var(--text2); margin-bottom: 32px; font-size: 16px; position: relative; }
+    .download-meta { margin-top: 24px; display: flex; justify-content: center; gap: 24px; font-size: 13px; color: var(--text3); position: relative; }
+
+    /* Footer */
+    footer { padding: 40px; text-align: center; border-top: 1px solid var(--border); margin-top: 40px; }
+    footer p { font-size: 13px; color: var(--text3); }
+    footer a { color: var(--text2); text-decoration: none; transition: color 0.2s; }
+    footer a:hover { color: var(--claude); }
+
+    /* Scroll animations */
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16,1,0.3,1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      nav { padding: 12px 20px; }
+      .nav-links { display: none; }
+      section, .features, .how-it-works, .download-section, .screenshot-section { padding-left: 20px; padding-right: 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .hero-cta { flex-direction: column; }
+      .hero h1 { letter-spacing: -1px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="glow glow-1"></div>
+<div class="glow glow-2"></div>
+<div class="glow glow-3"></div>
+
+<!-- Nav -->
+<nav id="nav">
+  <a href="#" class="nav-brand">
+    <img src="../assets/icon.png" alt="CCStatsOSX">
+    <span>CCStatsOSX</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how-it-works">How it Works</a>
+    <a href="https://github.com/uditalias/ccstatsosx" target="_blank">GitHub</a>
+    <a href="https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX.dmg" class="nav-download">Download</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> Free &amp; Open Source</div>
+  <img src="../assets/icon.png" class="hero-icon" alt="CCStatsOSX">
+  <h1>Claude usage,<br><span class="accent">always visible</span></h1>
+  <p>Monitor your Claude AI rate limits across all services — Code, Web, Desktop, and Cowork — right from your macOS menu bar.</p>
+  <div class="hero-cta">
+    <a href="https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX.dmg" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download for Mac
+    </a>
+    <a href="https://github.com/uditalias/ccstatsosx" target="_blank" class="btn-secondary">View on GitHub</a>
+  </div>
+  <p class="hero-version">v1.0.0 · macOS 13+ · 3MB</p>
+</section>
+
+<!-- Screenshot -->
+<section class="screenshot-section">
+  <div class="screenshot-wrapper">
+    <img src="../assets/screenshot.png" alt="CCStatsOSX in action">
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+  <div class="reveal">
+    <span class="section-label">Features</span>
+    <h2 class="section-title">Everything at a glance</h2>
+    <p class="section-subtitle">No more switching to the browser to check your limits. It's all right there in the menu bar.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card reveal"><div class="feature-icon">⚡</div><h3>Live Menu Bar</h3><p>See your 5-hour and 7-day usage percentages, countdown timers, and progress bars — without clicking anything.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon">🎨</div><h3>Color-Coded Alerts</h3><p>Configurable warning and critical thresholds. The menu bar turns orange then red as you approach your limits.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon">🔔</div><h3>Notifications</h3><p>Get macOS notifications when you hit 70% or 90% usage. Never get rate-limited by surprise again.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon">📊</div><h3>Model Breakdown</h3><p>See per-model usage — Sonnet, Opus, and Cowork limits each tracked separately when available.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon">⌨️</div><h3>Keyboard Shortcut</h3><p>Press ⌘⇧U from anywhere to toggle the popover. Right-click the icon for quick actions.</p></div>
+    <div class="feature-card reveal"><div class="feature-icon">🔒</div><h3>Privacy First</h3><p>Zero tokens consumed. No analytics. No telemetry. Everything stays on your Mac. Fully open source.</p></div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how-it-works" id="how-it-works">
+  <div class="reveal">
+    <span class="section-label">How it works</span>
+    <h2 class="section-title">Three steps, that's it</h2>
+    <p class="section-subtitle">CCStatsOSX uses the same credentials as Claude Code — no extra setup needed.</p>
+  </div>
+  <div class="steps">
+    <div class="step reveal"><span class="step-num">1</span><div><h3>Install Claude Code</h3><p>If you haven't already, install Claude Code and log in. CCStatsOSX reads the credentials it creates.</p></div></div>
+    <div class="step reveal"><span class="step-num">2</span><div><h3>Download CCStatsOSX</h3><p>Open the DMG and drag the app to Applications. Allow Keychain access when prompted — just once.</p></div></div>
+    <div class="step reveal"><span class="step-num">3</span><div><h3>Glance at your menu bar</h3><p>Your Claude usage appears instantly. Live percentages, countdown timers, and a detailed popover on click.</p></div></div>
+  </div>
+</section>
+
+<!-- Download CTA -->
+<section class="download-section" id="download">
+  <div class="download-card reveal">
+    <h2>Ready to try it?</h2>
+    <p>Free, open source, and takes 10 seconds to install.</p>
+    <a href="https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX.dmg" class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download for Mac
+    </a>
+    <div class="download-meta"><span>🍎 macOS 13+</span><span>📦 ~3MB</span><span>⚡ Zero tokens</span></div>
+  </div>
+</section>
+
+<footer>
+  <p>Built with ❤️ by <a href="https://github.com/uditalias" target="_blank">Udi Talias</a> · <a href="https://github.com/uditalias/ccstatsosx" target="_blank">GitHub</a> · <a href="https://github.com/uditalias/ccstatsosx/blob/main/LICENSE" target="_blank">MIT License</a></p>
+</footer>
+
+<script>
+  // Nav scroll effect
+  window.addEventListener('scroll', () => {
+    document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 50);
+  }, { passive: true });
+
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>

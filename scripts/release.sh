@@ -53,10 +53,14 @@ fi
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$PLIST"
 echo "Updated $PLIST"
 
-# Update README download badge
-sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX-v[0-9.]*.dmg|releases/download/v${NEW_VERSION}/CCStatsOSX-v${NEW_VERSION}.dmg|g" README.md
+# Update download links in README.md
+sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX\.dmg|releases/download/v${NEW_VERSION}/CCStatsOSX.dmg|g" README.md
 sed -i '' "s|CCStatsOSX_v[0-9.]*|CCStatsOSX_v${NEW_VERSION}|g" README.md
-echo "Updated README.md download link"
+echo "Updated README.md"
+
+# Update download links in website
+sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX\.dmg|releases/download/v${NEW_VERSION}/CCStatsOSX.dmg|g" website/index.html
+echo "Updated website/index.html"
 
 # Build DMG
 echo ""
@@ -75,7 +79,7 @@ echo ""
 
 # Commit version bump
 echo "Committing version bump..."
-git add "$PLIST" README.md
+git add "$PLIST" README.md website/index.html
 git commit -m "Release v$NEW_VERSION"
 
 TAG="v$NEW_VERSION"
@@ -105,7 +109,7 @@ if [[ "$GH_RELEASE" =~ ^[Yy] ]]; then
 
     echo "Creating GitHub release $TAG..."
     gh release create "$TAG" \
-        "$DMG_PATH#CCStatsOSX-v${NEW_VERSION}.dmg" \
+        "$DMG_PATH#CCStatsOSX.dmg" \
         --title "CCStatsOSX v$NEW_VERSION" \
         --notes "## Changes
 
@@ -113,7 +117,7 @@ $NOTES
 
 ## Install
 
-Download \`CCStatsOSX-v${NEW_VERSION}.dmg\`, open it, and drag the app to \`/Applications\`.
+Download \`CCStatsOSX.dmg\`, open it, and drag the app to \`/Applications\`.
 
 Requires macOS 13 (Ventura) or later and Claude Code installed."
 
