@@ -11,6 +11,9 @@ DerivedData/
 # Claude Code
 .claude/
 
+# Plans/docs
+docs/plans/
+
 # macOS
 .DS_Store
 *.swp
