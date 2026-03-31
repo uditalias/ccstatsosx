@@ -305,6 +305,12 @@ struct UsagePopover: View {
 
                 Divider().padding(.vertical, 4)
 
+                sectionHeader("Thresholds")
+                settingsSliderRow("Warning", value: $settings.warningThreshold, range: 50...90, color: .orange)
+                settingsSliderRow("Critical", value: $settings.criticalThreshold, range: 70...100, color: .red)
+
+                Divider().padding(.vertical, 4)
+
                 sectionHeader("General")
                 settingsToggleRow("Launch at login", isOn: Binding(
                     get: { settings.launchAtLogin },
@@ -363,6 +369,30 @@ struct UsagePopover: View {
             }
             .labelsHidden()
             .fixedSize()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 5)
+    }
+
+    private func settingsSliderRow(_ label: String, value: Binding<Int>, range: ClosedRange<Int>, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 13))
+                .frame(width: 60, alignment: .leading)
+            Slider(
+                value: Binding(
+                    get: { Double(value.wrappedValue) },
+                    set: { value.wrappedValue = Int($0) }
+                ),
+                in: Double(range.lowerBound)...Double(range.upperBound),
+                step: 5
+            )
+            .tint(color)
+            .controlSize(.small)
+            Text("\(value.wrappedValue)%")
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .foregroundColor(color)
+                .frame(width: 36, alignment: .trailing)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 5)
