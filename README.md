@@ -10,6 +10,12 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX-v1.0.0.dmg">
+    <img src="https://img.shields.io/badge/Download-CCStatsOSX_v1.0.0-C7613A?style=for-the-badge&logo=apple&logoColor=white" alt="Download CCStatsOSX">
+  </a>
+</p>
+
+<p align="center">
   <img src="assets/screenshot.png" width="600" alt="CCStatsOSX Screenshot">
 </p>
 
@@ -33,9 +39,7 @@ Click the menu bar item to see a detailed breakdown, or just glance at the live 
 
 ## Install
 
-### Download
-
-Download the latest `CCStatsOSX.dmg` from [Releases](../../releases), open it, and drag the app to `/Applications`.
+Download the DMG, open it, and drag the app to `/Applications`. Or grab it from the [Releases](../../releases) page.
 
 ### Build from source
 

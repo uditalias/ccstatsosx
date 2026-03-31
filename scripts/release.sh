@@ -53,6 +53,11 @@ fi
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW_BUILD" "$PLIST"
 echo "Updated $PLIST"
 
+# Update README download badge
+sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX-v[0-9.]*.dmg|releases/download/v${NEW_VERSION}/CCStatsOSX-v${NEW_VERSION}.dmg|g" README.md
+sed -i '' "s|CCStatsOSX_v[0-9.]*|CCStatsOSX_v${NEW_VERSION}|g" README.md
+echo "Updated README.md download link"
+
 # Build DMG
 echo ""
 echo "Building release DMG..."
@@ -70,7 +75,7 @@ echo ""
 
 # Commit version bump
 echo "Committing version bump..."
-git add "$PLIST"
+git add "$PLIST" README.md
 git commit -m "Release v$NEW_VERSION"
 
 TAG="v$NEW_VERSION"
