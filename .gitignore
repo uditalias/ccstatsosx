@@ -1,0 +1,25 @@
+# Swift Package Manager
+.build/
+Package.resolved
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+
+# Claude Code
+.claude/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Node (from earlier tests)
+node_modules/
+package.json
+package-lock.json
+
+# Test files
+*.output
