@@ -15,7 +15,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="CCStatsOSX — Claude Usage in Your Menu Bar">
   <meta property="og:description" content="Monitor your Claude AI rate limits at a glance. A native macOS menu bar app that tracks usage across all Claude services.">
-  <meta property="og:image" content="https://uditalias.github.io/ccstatsosx/assets/screenshot.png">
+  <meta property="og:image" content="https://uditalias.github.io/ccstatsosx/assets/screenshot3.png">
   <meta property="og:image:alt" content="CCStatsOSX menu bar app showing Claude usage statistics">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -27,7 +27,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CCStatsOSX — Claude Usage in Your Menu Bar">
   <meta name="twitter:description" content="Monitor your Claude AI rate limits at a glance. A native macOS menu bar app that tracks usage across all Claude services.">
-  <meta name="twitter:image" content="https://uditalias.github.io/ccstatsosx/assets/screenshot.png">
+  <meta name="twitter:image" content="https://uditalias.github.io/ccstatsosx/assets/screenshot3.png">
   <meta name="twitter:image:alt" content="CCStatsOSX menu bar app showing Claude usage statistics">
 
   <!-- Apple -->
@@ -59,7 +59,7 @@
     "softwareVersion": "1.0.0",
     "fileSize": "3MB",
     "downloadUrl": "https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX.dmg",
-    "screenshot": "https://uditalias.github.io/ccstatsosx/assets/screenshot.png",
+    "screenshot": "https://uditalias.github.io/ccstatsosx/assets/screenshot3.png",
     "author": {
       "@type": "Person",
       "name": "Udi Talias",
@@ -89,6 +89,7 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; background: var(--bg); }
+    html, body { overflow-x: clip; }
 
     body {
       font-family: 'Outfit', -apple-system, sans-serif;
@@ -98,18 +99,31 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* Grain */
-    body::before {
-      content: '';
+    /* Bottom fog */
+    .bottom-fog {
       position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      bottom: 0; left: 0; right: 0;
+      height: 120px;
+      background: linear-gradient(to top, var(--bg) 0%, transparent 100%);
       pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Glow + grain wrapper */
+    .bg-effects { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+
+    /* Grain */
+    .bg-effects::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      background-size: 512px 512px;
       z-index: 10000;
     }
 
     /* Glow orbs */
-    .glow { position: absolute; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+    .glow { position: absolute; border-radius: 50%; filter: blur(120px); z-index: 0; }
     .glow-1 { width: 600px; height: 600px; background: radial-gradient(circle, var(--claude-glow) 0%, transparent 70%); top: -200px; left: 50%; transform: translateX(-50%); animation: gfloat 8s ease-in-out infinite; }
     .glow-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(199,97,58,0.15) 0%, transparent 70%); top: 60%; right: -100px; animation: gfloat 12s ease-in-out infinite reverse; }
     .glow-3 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(212,132,95,0.1) 0%, transparent 70%); bottom: 10%; left: -150px; animation: gfloat 10s ease-in-out infinite; }
@@ -275,11 +289,34 @@
     .screenshot-section { padding: 40px 40px 120px; }
     .screenshot-wrapper {
       position: relative; max-width: 800px; margin: 0 auto;
-      border-radius: 16px; overflow: hidden;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05), 0 0 120px rgba(199,97,58,0.1);
       animation: fadeUp 0.8s ease 0.6s forwards; opacity: 0;
     }
-    .screenshot-wrapper img { width: 100%; display: block; }
+    .screenshot-wrapper img { width: 100%; display: block; border-radius: 8px; }
+
+    /* Story */
+    .story { padding: 80px 40px 120px; }
+    .story-card {
+      max-width: 640px; margin: 0 auto;
+      position: relative;
+      padding-left: 28px;
+    }
+    .story-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 4px; bottom: 4px;
+      width: 3px;
+      background: linear-gradient(to bottom, var(--claude), transparent);
+      border-radius: 2px;
+    }
+    .story-card .section-label { margin-bottom: 20px; }
+    .story-card p {
+      font-family: 'Poly', Georgia, serif;
+      font-size: 21px;
+      line-height: 1.8;
+      color: var(--text2);
+      font-style: italic;
+    }
+    .story-card p em { color: var(--text); font-style: italic; }
 
     /* Features */
     .features { padding: 120px 40px; }
@@ -316,13 +353,13 @@
     .download-meta { margin-top: 24px; display: flex; justify-content: center; gap: 24px; font-size: 13px; color: var(--text3); position: relative; }
 
     /* Footer */
-    footer { padding: 40px; text-align: center; border-top: 1px solid var(--border); margin-top: 40px; }
+    footer { padding: 40px; text-align: center; border-top: 1px solid var(--border); margin-top: 40px; position: relative; z-index: 10000; }
     footer p { font-size: 13px; color: var(--text3); }
     footer a { color: var(--text2); text-decoration: none; transition: color 0.2s; }
     footer a:hover { color: var(--claude); }
 
     /* Scroll animations */
-    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16,1,0.3,1); }
+    .reveal { opacity: 0; transform: translateY(30px); transition: all 0.8s cubic-bezier(0.16,1,0.3,1); transition-delay: var(--reveal-delay, 0.05s); }
     .reveal.visible { opacity: 1; transform: translateY(0); }
 
     /* Responsive */
@@ -333,14 +370,30 @@
       .features-grid { grid-template-columns: 1fr; }
       .hero-cta { flex-direction: column; }
       .hero h1 { letter-spacing: -1px; }
+      .hero { min-height: auto; padding-top: 100px; padding-bottom: 40px; }
+      .hero-icon { width: 64px; height: 64px; border-radius: 16px; margin-bottom: 24px; }
+      .hero-badge { margin-bottom: 24px; }
+      .hero p { margin-bottom: 28px; }
+      .screenshot-section { padding-top: 0; padding-bottom: 60px; padding-left: 0; padding-right: 0; }
+      .screenshot-wrapper img { border-radius: 0; }
+      .story { padding-top: 40px; padding-bottom: 60px; }
+      .features { padding-top: 60px; padding-bottom: 60px; }
+      .how-it-works { padding-top: 60px; padding-bottom: 60px; }
+      .download-section { padding-top: 60px; padding-bottom: 60px; }
+      .download-card { padding: 40px 24px; }
+      .section-subtitle { margin-bottom: 40px; }
+      footer { padding: 28px 20px; margin-top: 20px; }
     }
   </style>
 </head>
 <body>
 
-<div class="glow glow-1"></div>
-<div class="glow glow-2"></div>
-<div class="glow glow-3"></div>
+<div class="bottom-fog"></div>
+<div class="bg-effects">
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+  <div class="glow glow-3"></div>
+</div>
 
 <!-- Nav -->
 <nav id="nav">
@@ -375,7 +428,15 @@
 <!-- Screenshot -->
 <section class="screenshot-section">
   <div class="screenshot-wrapper">
-    <img src="./assets/screenshot.png" alt="CCStatsOSX in action">
+    <img src="./assets/screenshot3.png" alt="CCStatsOSX in action">
+  </div>
+</section>
+
+<!-- Story -->
+<section class="story">
+  <div class="story-card reveal">
+    <span class="section-label">Why I built this</span>
+    <p>Every Claude Code user knows the status line — that little bar at the bottom of your terminal that tells you exactly where your usage stands. It's great. But the moment you switch to Claude Desktop or the web app, <em>it's gone.</em> You're on your own. And the only way to check is to open a browser, go to settings, and stare at a usage page. I did that dance enough times to finally snap and build a menu bar app that gives me that same status line — <em>no matter which Claude app I'm using.</em> No clicks, no windows, no context switching. Just glance up and it's there.</p>
   </div>
 </section>
 
@@ -424,7 +485,7 @@
 </section>
 
 <footer>
-  <p>Built with ❤️ by <a href="https://github.com/uditalias" target="_blank">Udi Talias</a> · <a href="https://github.com/uditalias/ccstatsosx" target="_blank">GitHub</a> · <a href="https://github.com/uditalias/ccstatsosx/blob/main/LICENSE" target="_blank">MIT License</a></p>
+  <p>Built with ❤️ by <a href="https://github.com/uditalias" target="_blank">Udi Talias</a> and <a href="https://claude.ai" target="_blank">Claude</a> · <a href="https://github.com/uditalias/ccstatsosx" target="_blank">GitHub</a> · <a href="https://github.com/uditalias/ccstatsosx/blob/main/LICENSE" target="_blank">MIT License</a></p>
 </footer>
 
 <script>
@@ -441,7 +502,7 @@
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 </script>
 

@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshot.png" width="600" alt="CCStatsOSX Screenshot">
+  <img src="assets/screenshot2.png" width="600" alt="CCStatsOSX Screenshot">
 </p>
 
 ## What it does
