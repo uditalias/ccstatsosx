@@ -16,8 +16,12 @@
 </p>
 
 <p align="center">
-  <img src="assets/screenshot2.png" width="600" alt="CCStatsOSX Screenshot">
+  <img src="assets/screenshot3.png" width="600" alt="CCStatsOSX Screenshot">
 </p>
+
+## Why I built this
+
+Every Claude Code user knows the status line — that little bar at the bottom of your terminal that tells you exactly where your usage stands. It's great. But the moment you switch to Claude Desktop or the web app, it's gone. You're on your own. And the only way to check is to open a browser, go to settings, and stare at a usage page. I did that dance enough times to finally snap and build a menu bar app that gives me that same status line — no matter which Claude app I'm using. No clicks, no windows, no context switching. Just glance up and it's there.
 
 ## What it does
 
