@@ -3,7 +3,7 @@ import Foundation
 class NotificationService {
     static let shared = NotificationService()
 
-    private var notifiedThresholds: Set<String> = []
+    var notifiedThresholds: Set<String> = []
 
     func setup() {
         // No setup needed — we use osascript which doesn't require permission

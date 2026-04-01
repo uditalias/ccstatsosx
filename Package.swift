@@ -9,6 +9,11 @@ let package = Package(
             name: "CCStatsOSX",
             path: "CCStatsOSX",
             exclude: ["Info.plist"]
+        ),
+        .testTarget(
+            name: "CCStatsOSXTests",
+            dependencies: ["CCStatsOSX"],
+            path: "Tests"
         )
     ]
 )
