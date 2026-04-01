@@ -58,8 +58,10 @@ sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX\.dmg|releases/download/v${NEW
 sed -i '' "s|CCStatsOSX_v[0-9.]*|CCStatsOSX_v${NEW_VERSION}|g" README.md
 echo "Updated README.md"
 
-# Update download links in website
+# Update download links and version strings in website
 sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX\.dmg|releases/download/v${NEW_VERSION}/CCStatsOSX.dmg|g" index.html
+sed -i '' "s|\"softwareVersion\": \"[0-9.]*\"|\"softwareVersion\": \"${NEW_VERSION}\"|g" index.html
+sed -i '' "s|>v[0-9.]* · macOS|>v${NEW_VERSION} · macOS|g" index.html
 echo "Updated index.html"
 
 # Build DMG
