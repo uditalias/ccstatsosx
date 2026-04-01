@@ -45,6 +45,11 @@ Click the menu bar item to see a detailed breakdown, or just glance at the live 
 
 Download the DMG, open it, and drag the app to `/Applications`. Or grab it from the [Releases](../../releases) page.
 
+> **First launch:** Since the app isn't code-signed, macOS may block it. **Right-click** the app and select **Open** — then click **Open** in the dialog. You only need to do this once. If you see "damaged and can't be opened", run:
+> ```bash
+> xattr -cr /Applications/CCStatsOSX.app
+> ```
+
 ### Build from source
 
 ```bash

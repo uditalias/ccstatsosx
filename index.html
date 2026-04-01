@@ -300,7 +300,29 @@
       position: relative; max-width: 800px; margin: 0 auto;
       animation: fadeUp 0.8s ease 0.6s forwards; opacity: 0;
     }
-    .screenshot-wrapper img { width: 100%; display: block; border-radius: 8px; }
+    .screenshot-wrapper img, .screenshot-wrapper video { width: 100%; display: block; border-radius: 8px; }
+    .screenshot-wrapper video { display: none; }
+    .screenshot-wrapper.playing img, .screenshot-wrapper.playing .play-btn { display: none; }
+    .screenshot-wrapper.playing video { display: block; }
+    .play-btn {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 2px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      z-index: 2;
+    }
+    .play-btn:hover { background: rgba(199,97,58,0.6); border-color: rgba(255,255,255,0.3); transform: translate(-50%, -50%) scale(1.1); }
+    .play-btn svg { width: 28px; height: 28px; fill: white; margin-left: 4px; }
 
     /* Story */
     .story { padding: 80px 40px 120px; }
@@ -341,7 +363,7 @@
     .feature-card p { font-size: 14px; color: var(--text2); line-height: 1.6; }
 
     /* How it works */
-    .how-it-works { padding: 120px 40px; }
+    .install { padding: 120px 40px; }
     .steps { display: flex; flex-direction: column; max-width: 600px; }
     .step { display: flex; gap: 24px; padding: 32px 0; border-bottom: 1px solid var(--border); }
     .step:last-child { border-bottom: none; }
@@ -375,7 +397,7 @@
     @media (max-width: 768px) {
       nav { padding: 12px 20px; }
       .nav-links { display: none; }
-      section, .features, .how-it-works, .download-section, .screenshot-section { padding-left: 20px; padding-right: 20px; }
+      section, .features, .install, .download-section, .screenshot-section { padding-left: 20px; padding-right: 20px; }
       .features-grid { grid-template-columns: 1fr; }
       .hero-cta { flex-direction: column; }
       .hero h1 { letter-spacing: -1px; }
@@ -384,10 +406,10 @@
       .hero-badge { margin-bottom: 24px; }
       .hero p { margin-bottom: 28px; }
       .screenshot-section { padding-top: 0; padding-bottom: 60px; padding-left: 0; padding-right: 0; }
-      .screenshot-wrapper img { border-radius: 0; }
+      .screenshot-wrapper img, .screenshot-wrapper video { border-radius: 0; }
       .story { padding-top: 40px; padding-bottom: 60px; }
       .features { padding-top: 60px; padding-bottom: 60px; }
-      .how-it-works { padding-top: 60px; padding-bottom: 60px; }
+      .install { padding-top: 60px; padding-bottom: 60px; }
       .download-section { padding-top: 60px; padding-bottom: 60px; }
       .download-card { padding: 40px 24px; }
       .section-subtitle { margin-bottom: 40px; }
@@ -412,7 +434,7 @@
   </a>
   <div class="nav-links">
     <a href="#features">Features</a>
-    <a href="#how-it-works">How it Works</a>
+    <a href="#install">Install</a>
     <a href="https://github.com/uditalias/ccstatsosx" target="_blank">GitHub</a>
     <a href="https://github.com/uditalias/ccstatsosx/releases/download/v1.0.0/CCStatsOSX.dmg" class="nav-download">Download</a>
   </div>
@@ -436,8 +458,12 @@
 
 <!-- Screenshot -->
 <section class="screenshot-section">
-  <div class="screenshot-wrapper">
+  <div class="screenshot-wrapper" id="screencast">
     <img src="./assets/screenshot3.png" alt="CCStatsOSX in action">
+    <button class="play-btn" aria-label="Play screencast">
+      <svg viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+    </button>
+    <video src="./assets/screencast.mp4" playsinline loop></video>
   </div>
 </section>
 
@@ -467,15 +493,15 @@
 </section>
 
 <!-- How it works -->
-<section class="how-it-works" id="how-it-works">
+<section class="install" id="install">
   <div class="reveal">
-    <span class="section-label">How it works</span>
+    <span class="section-label">Install</span>
     <h2 class="section-title">Three steps, that's it</h2>
     <p class="section-subtitle">CCStatsOSX uses the same credentials as Claude Code — no extra setup needed.</p>
   </div>
   <div class="steps">
     <div class="step reveal"><span class="step-num">1</span><div><h3>Install Claude Code</h3><p>If you haven't already, install Claude Code and log in. CCStatsOSX reads the credentials it creates.</p></div></div>
-    <div class="step reveal"><span class="step-num">2</span><div><h3>Download CCStatsOSX</h3><p>Open the DMG and drag the app to Applications. Allow Keychain access when prompted — just once.</p></div></div>
+    <div class="step reveal"><span class="step-num">2</span><div><h3>Download CCStatsOSX</h3><p>Open the DMG and drag the app to Applications. If macOS blocks it, right-click the app and select Open. Allow Keychain access when prompted — just once.</p></div></div>
     <div class="step reveal"><span class="step-num">3</span><div><h3>Glance at your menu bar</h3><p>Your Claude usage appears instantly. Live percentages, countdown timers, and a detailed popover on click.</p></div></div>
   </div>
 </section>
@@ -513,6 +539,20 @@
     });
   }, { threshold: 0.15, rootMargin: '0px 0px -80px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Screencast play
+  const screencast = document.getElementById('screencast');
+  const scImg = screencast.querySelector('img');
+  const scVideo = screencast.querySelector('video');
+
+  screencast.querySelector('.play-btn').addEventListener('click', () => {
+    const rect = scImg.getBoundingClientRect();
+    scVideo.style.width = rect.width + 'px';
+    scVideo.style.height = rect.height + 'px';
+    scVideo.style.objectFit = 'cover';
+    screencast.classList.add('playing');
+    scVideo.play();
+  });
 </script>
 
 </body>
