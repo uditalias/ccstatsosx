@@ -109,10 +109,6 @@ macOS notifications when usage hits configurable thresholds:
 - **Warning** at 70% (default)
 - **Critical** at 90% (default)
 
-### Keyboard shortcut
-
-Press `⌘⇧U` from anywhere to toggle the popover.
-
 ### Right-click menu
 
 Right-click the menu bar item for quick access to:

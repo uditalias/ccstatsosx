@@ -1,5 +1,4 @@
 import SwiftUI
-import Carbon
 
 @main
 struct CCStatsOSXApp: App {
@@ -15,7 +14,6 @@ struct CCStatsOSXApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var scheduler: PollScheduler!
     private var statusBarController: StatusBarController!
-    private var hotKeyRef: EventHotKeyRef?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -32,9 +30,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try? await AuthService.shared.loadCredentials()
             await scheduler.start()
         }
-
-        // Register global hotkey: ⌘⇧U
-        registerGlobalHotKey()
 
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
@@ -56,34 +51,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleWake() {
         Task { @MainActor in scheduler.start() }
-    }
-
-    // MARK: - Global Hotkey (⌘⇧U)
-
-    private func registerGlobalHotKey() {
-        let hotKeyID = EventHotKeyID(signature: FourCharCode(0x43435355), // "CCSU"
-                                      id: 1)
-
-        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
-                                       eventKind: UInt32(kEventHotKeyPressed))
-
-        let handler: EventHandlerUPP = { _, event, _ -> OSStatus in
-            DispatchQueue.main.async {
-                if let delegate = NSApp.delegate as? AppDelegate {
-                    delegate.statusBarController.toggleFromHotKey()
-                }
-            }
-            return noErr
-        }
-
-        InstallEventHandler(GetApplicationEventTarget(), handler, 1, &eventType, nil, nil)
-
-        // ⌘⇧U: keycode 32 = 'U', cmdKey + shiftKey
-        RegisterEventHotKey(UInt32(kVK_ANSI_U),
-                           UInt32(cmdKey | shiftKey),
-                           hotKeyID,
-                           GetApplicationEventTarget(),
-                           0,
-                           &hotKeyRef)
     }
 }

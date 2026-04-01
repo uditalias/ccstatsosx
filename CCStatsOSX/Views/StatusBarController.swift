@@ -412,10 +412,6 @@ class StatusBarController: ObservableObject {
         }
     }
 
-    func toggleFromHotKey() {
-        togglePopover(nil)
-    }
-
     @objc private func togglePopover(_ sender: AnyObject?) {
         let p = getOrCreatePanel()
 
