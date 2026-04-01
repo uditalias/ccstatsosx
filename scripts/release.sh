@@ -59,8 +59,8 @@ sed -i '' "s|CCStatsOSX_v[0-9.]*|CCStatsOSX_v${NEW_VERSION}|g" README.md
 echo "Updated README.md"
 
 # Update download links in website
-sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX\.dmg|releases/download/v${NEW_VERSION}/CCStatsOSX.dmg|g" website/index.html
-echo "Updated website/index.html"
+sed -i '' "s|releases/download/v[0-9.]*/CCStatsOSX\.dmg|releases/download/v${NEW_VERSION}/CCStatsOSX.dmg|g" index.html
+echo "Updated index.html"
 
 # Build DMG
 echo ""
@@ -79,7 +79,7 @@ echo ""
 
 # Commit version bump
 echo "Committing version bump..."
-git add "$PLIST" README.md website/index.html
+git add "$PLIST" README.md index.html
 git commit -m "Release v$NEW_VERSION"
 
 TAG="v$NEW_VERSION"
