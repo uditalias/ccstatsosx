@@ -1,4 +1,5 @@
 import SwiftUI
+import Network
 
 @main
 struct CCStatsOSXApp: App {
@@ -50,6 +51,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func handleWake() {
-        Task { @MainActor in scheduler.start() }
+        Task { @MainActor in
+            scheduler.connectionState = .disconnected("Reconnecting...")
+            await waitForNetwork()
+            try? await AuthService.shared.reloadCredentials()
+            scheduler.start()
+        }
+    }
+
+    private func waitForNetwork() async {
+        let monitor = NWPathMonitor()
+        let queue = DispatchQueue(label: "cc.stats.netmonitor")
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            final class Box: @unchecked Sendable { var resumed = false }
+            let box = Box()
+            monitor.pathUpdateHandler = { path in
+                guard path.status == .satisfied, !box.resumed else { return }
+                box.resumed = true
+                monitor.cancel()
+                continuation.resume()
+            }
+            monitor.start(queue: queue)
+        }
     }
 }

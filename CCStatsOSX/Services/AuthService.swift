@@ -39,6 +39,13 @@ actor AuthService {
         hasLoadedFromKeychain = true
     }
 
+    /// Force re-read credentials from Keychain. Use after auth errors
+    /// or wake from sleep when Keychain state may have changed.
+    func reloadCredentials() throws {
+        cachedCredentials = try KeychainService.readCredentials()
+        hasLoadedFromKeychain = true
+    }
+
     func getValidToken() async throws -> (token: String, credentials: KeychainCredentials) {
         // Ensure we've loaded from Keychain
         if !hasLoadedFromKeychain {
@@ -111,9 +118,17 @@ actor AuthService {
             organizationUuid: credentials.organizationUuid
         )
 
-        // Only touch Keychain on refresh (rare)
-        try KeychainService.saveCredentials(newCredentials)
+        // Update in-memory cache first so the app keeps working
+        // even if Keychain save fails (e.g. locked after sleep)
         cachedCredentials = newCredentials
+
+        // Persist to Keychain (best-effort — may fail after wake)
+        do {
+            try KeychainService.saveCredentials(newCredentials)
+        } catch {
+            NSLog("[Auth] Keychain save failed (token still valid in memory): %@", "\(error)")
+        }
+
         return newCredentials
     }
 }
