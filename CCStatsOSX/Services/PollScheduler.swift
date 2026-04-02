@@ -1,7 +1,7 @@
 import Foundation
 import Combine
 
-enum ConnectionState {
+enum ConnectionState: Equatable {
     case connected
     case disconnected(String)
     case error(String)
@@ -13,16 +13,21 @@ class PollScheduler: ObservableObject {
     @Published var connectionState: ConnectionState = .disconnected("Starting...")
     @Published var lastUpdated: Date?
 
-    private var timer: Timer?
-    private var unchangedCount = 0
-    private var errorCount = 0
+    private(set) var timer: Timer?
+    private(set) var unchangedCount = 0
+    private(set) var errorCount = 0
     private var lastDataHash: Int?
-    private var lastPollTime: Date?
-    private var isPolling = false
+    private(set) var lastPollTime: Date?
+    private(set) var isPolling = false
     private let settings = AppSettings.shared
+
+    /// Injectable usage fetcher for testing. Defaults to the real API service.
+    var usageFetcher: (() async throws -> UsageData)?
 
     func start() {
         stop()
+        errorCount = 0
+        unchangedCount = 0
         Task { await poll() }
     }
 
@@ -32,25 +37,27 @@ class PollScheduler: ObservableObject {
     }
 
     func pollNow() {
-        // Throttle: don't poll if we polled within the last 60 seconds
-        if let lastPoll = lastPollTime, Date().timeIntervalSince(lastPoll) < 60 {
-            return
-        }
+        guard !isPolling else { return }
         Task { await poll() }
     }
 
-    private func poll() async {
+    func poll() async {
         // Prevent concurrent polls
         guard !isPolling else { return }
         isPolling = true
         defer { isPolling = false }
 
         do {
-            #if DEBUG
-            let data = MockUsageService.fetchUsage()
-            #else
-            let data = try await UsageAPIService.fetchUsage()
-            #endif
+            let data: UsageData
+            if let fetcher = usageFetcher {
+                data = try await fetcher()
+            } else {
+                #if DEBUG
+                data = MockUsageService.fetchUsage()
+                #else
+                data = try await UsageAPIService.fetchUsage()
+                #endif
+            }
             let newHash = "\(data.fiveHour?.utilization ?? -1)_\(data.sevenDay?.utilization ?? -1)".hashValue
 
             if newHash == lastDataHash {
@@ -91,23 +98,25 @@ class PollScheduler: ObservableObject {
         scheduleNext()
     }
 
-    private func scheduleNext() {
-        timer?.invalidate()
-
+    /// Calculate the next poll interval based on current state.
+    /// Exposed for testing.
+    func nextPollInterval() -> TimeInterval {
         let baseInterval = TimeInterval(settings.pollInterval)
-        let interval: TimeInterval
 
         if errorCount > 0 {
-            // Exponential backoff: 2m, 4m, 8m (capped at 8m)
-            interval = min(baseInterval * pow(2, Double(errorCount)), 480)
+            return min(baseInterval * pow(2, Double(errorCount)), 480)
         } else if unchangedCount >= 10 {
-            interval = baseInterval * 5
+            return baseInterval * 5
         } else if unchangedCount >= 5 {
-            interval = baseInterval * 2
+            return baseInterval * 2
         } else {
-            interval = baseInterval
+            return baseInterval
         }
+    }
 
+    private func scheduleNext() {
+        timer?.invalidate()
+        let interval = nextPollInterval()
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.poll()

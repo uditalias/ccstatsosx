@@ -115,11 +115,16 @@ actor AuthService {
         // even if Keychain save fails (e.g. locked after sleep)
         cachedCredentials = newCredentials
 
-        // Persist to Keychain (best-effort — may fail after wake)
-        do {
-            try KeychainService.saveCredentials(newCredentials)
-        } catch {
-            NSLog("[Auth] Keychain save failed (token still valid in memory): %@", "\(error)")
+        // Persist to Keychain on a background thread (best-effort).
+        // Keychain writes can block if macOS shows an authorization prompt,
+        // so we must not block the poll loop.
+        let credentialsToSave = newCredentials
+        DispatchQueue.global(qos: .utility).async {
+            do {
+                try KeychainService.saveCredentials(credentialsToSave)
+            } catch {
+                NSLog("[Auth] Keychain save failed (token still valid in memory): %@", "\(error)")
+            }
         }
 
         return newCredentials
