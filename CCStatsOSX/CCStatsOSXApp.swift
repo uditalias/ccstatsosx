@@ -54,7 +54,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             scheduler.connectionState = .disconnected("Reconnecting...")
             await waitForNetwork()
-            try? await AuthService.shared.reloadCredentials()
             scheduler.start()
         }
     }

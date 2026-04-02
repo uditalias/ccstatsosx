@@ -75,9 +75,6 @@ class PollScheduler: ObservableObject {
         } catch let error as AuthError {
             connectionState = .error("Auth: \(error)")
             errorCount += 1
-            // Force re-read from Keychain on next attempt — credentials
-            // may have changed or Keychain may need re-authorization
-            try? await AuthService.shared.reloadCredentials()
         } catch let error as UsageAPIError {
             switch error {
             case .httpError(429, _):

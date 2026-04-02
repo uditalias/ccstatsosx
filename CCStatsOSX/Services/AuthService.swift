@@ -39,13 +39,6 @@ actor AuthService {
         hasLoadedFromKeychain = true
     }
 
-    /// Force re-read credentials from Keychain. Use after auth errors
-    /// or wake from sleep when Keychain state may have changed.
-    func reloadCredentials() throws {
-        cachedCredentials = try KeychainService.readCredentials()
-        hasLoadedFromKeychain = true
-    }
-
     func getValidToken() async throws -> (token: String, credentials: KeychainCredentials) {
         // Ensure we've loaded from Keychain
         if !hasLoadedFromKeychain {
