@@ -41,16 +41,20 @@ actor AuthService {
     func getValidToken() async throws -> (token: String, credentials: KeychainCredentials) {
         // Ensure we've loaded from Keychain
         if !hasLoadedFromKeychain {
+            NSLog("[Auth] Loading credentials from Keychain (first time)")
             try loadCredentials()
         }
 
         guard var credentials = cachedCredentials else {
+            NSLog("[Auth] No cached credentials — throwing noCredentials")
             throw AuthError.noCredentials
         }
 
         if credentials.claudeAiOauth.isExpired {
+            NSLog("[Auth] Token expired — refreshing...")
             credentials = try await refreshToken(credentials)
             cachedCredentials = credentials
+            NSLog("[Auth] Token refreshed successfully")
         }
 
         return (credentials.claudeAiOauth.accessToken, credentials)

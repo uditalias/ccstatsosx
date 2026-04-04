@@ -37,7 +37,11 @@ class PollScheduler: ObservableObject {
     }
 
     func pollNow() {
-        guard !isPolling else { return }
+        NSLog("[Poll] pollNow called — isPolling=%d, errorCount=%d", isPolling ? 1 : 0, errorCount)
+        guard !isPolling else {
+            NSLog("[Poll] pollNow BLOCKED — poll already in progress")
+            return
+        }
         // Reset backoff so a manual refresh gets normal scheduling after
         errorCount = 0
         unchangedCount = 0
@@ -47,9 +51,14 @@ class PollScheduler: ObservableObject {
 
     func poll() async {
         // Prevent concurrent polls
-        guard !isPolling else { return }
+        guard !isPolling else {
+            NSLog("[Poll] poll() BLOCKED — already polling")
+            return
+        }
         isPolling = true
         defer { isPolling = false }
+
+        NSLog("[Poll] Starting poll...")
 
         do {
             let data: UsageData
@@ -76,6 +85,8 @@ class PollScheduler: ObservableObject {
             connectionState = .connected
             lastUpdated = Date()
 
+            NSLog("[Poll] Success — 5h=%.1f%% 7d=%.1f%%", data.fiveHour?.utilization ?? 0, data.sevenDay?.utilization ?? 0)
+
             // Check for threshold notifications
             NotificationService.shared.checkAndNotify(data: data)
             NotificationService.shared.resetIfNeeded(data: data)
@@ -83,9 +94,11 @@ class PollScheduler: ObservableObject {
         } catch is KeychainError {
             connectionState = .disconnected("Claude Code not found")
             errorCount += 1
+            NSLog("[Poll] KeychainError — errorCount=%d", errorCount)
         } catch let error as AuthError {
             connectionState = .error("Auth: \(error)")
             errorCount += 1
+            NSLog("[Poll] AuthError: %@ — errorCount=%d", "\(error)", errorCount)
         } catch let error as UsageAPIError {
             switch error {
             case .httpError(429, _):
@@ -94,9 +107,11 @@ class PollScheduler: ObservableObject {
                 connectionState = .error(error.localizedDescription ?? "API error")
             }
             errorCount += 1
+            NSLog("[Poll] UsageAPIError: %@ — errorCount=%d", "\(error)", errorCount)
         } catch {
             connectionState = .error(error.localizedDescription)
             errorCount += 1
+            NSLog("[Poll] Unknown error: %@ — errorCount=%d", error.localizedDescription, errorCount)
         }
 
         scheduleNext()
@@ -108,7 +123,8 @@ class PollScheduler: ObservableObject {
         let baseInterval = TimeInterval(settings.pollInterval)
 
         if errorCount > 0 {
-            return min(baseInterval * pow(2, Double(errorCount)), 480)
+            // Start retry at 30s, doubling each time, capped at 480s
+            return min(30 * pow(2, Double(errorCount - 1)), 480)
         } else if unchangedCount >= 10 {
             return baseInterval * 5
         } else if unchangedCount >= 5 {
@@ -121,6 +137,7 @@ class PollScheduler: ObservableObject {
     private func scheduleNext() {
         timer?.invalidate()
         let interval = nextPollInterval()
+        NSLog("[Poll] Next poll in %.0fs (errorCount=%d, unchangedCount=%d)", interval, errorCount, unchangedCount)
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.poll()

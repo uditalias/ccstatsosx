@@ -27,9 +27,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusBarController = StatusBarController(scheduler: scheduler)
 
         // Load credentials once, then start polling
-        Task {
-            try? await AuthService.shared.loadCredentials()
-            await scheduler.start()
+        NSLog("[App] About to create startup Task")
+        Task { @MainActor in
+            NSLog("[App] Task started — loading credentials...")
+            do {
+                try await AuthService.shared.loadCredentials()
+                NSLog("[App] Credentials loaded OK")
+            } catch {
+                NSLog("[App] Credentials failed: %@", "\(error)")
+            }
+            NSLog("[App] Starting scheduler...")
+            self.scheduler.start()
+            NSLog("[App] Scheduler started")
         }
 
         NSWorkspace.shared.notificationCenter.addObserver(

@@ -31,11 +31,16 @@ struct UsageAPIService {
         let (data, response) = try await URLSession.shared.data(for: request)
 
         guard let httpResponse = response as? HTTPURLResponse else {
+            NSLog("[API] No HTTP response object")
             throw UsageAPIError.httpError(0, "No HTTP response")
         }
 
+        let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After")
+        NSLog("[API] HTTP %d (%d bytes) Retry-After=%@", httpResponse.statusCode, data.count, retryAfter ?? "none")
+
         guard (200...299).contains(httpResponse.statusCode) else {
             let body = String(data: data, encoding: .utf8)
+            NSLog("[API] Error body: %@", body ?? "(nil)")
             throw UsageAPIError.httpError(httpResponse.statusCode, body)
         }
 

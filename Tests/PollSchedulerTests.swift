@@ -302,11 +302,23 @@ final class PollSchedulerTests: XCTestCase {
         let scheduler = makeScheduler { throw AuthError.noCredentials }
 
         await scheduler.poll() // errorCount = 1
-        // min(300 * 2^1, 480) = min(600, 480) = 480
-        XCTAssertEqual(scheduler.nextPollInterval(), 480)
+        // min(30 * 2^0, 480) = 30
+        XCTAssertEqual(scheduler.nextPollInterval(), 30)
 
         await scheduler.poll() // errorCount = 2
-        // min(300 * 2^2, 480) = min(1200, 480) = 480
+        // min(30 * 2^1, 480) = 60
+        XCTAssertEqual(scheduler.nextPollInterval(), 60)
+
+        await scheduler.poll() // errorCount = 3
+        // min(30 * 2^2, 480) = 120
+        XCTAssertEqual(scheduler.nextPollInterval(), 120)
+
+        await scheduler.poll() // errorCount = 4
+        // min(30 * 2^3, 480) = 240
+        XCTAssertEqual(scheduler.nextPollInterval(), 240)
+
+        await scheduler.poll() // errorCount = 5
+        // min(30 * 2^4, 480) = 480
         XCTAssertEqual(scheduler.nextPollInterval(), 480)
     }
 
@@ -342,7 +354,7 @@ final class PollSchedulerTests: XCTestCase {
         await scheduler.poll()
         await scheduler.poll()
         XCTAssertEqual(scheduler.errorCount, 2)
-        XCTAssertEqual(scheduler.nextPollInterval(), 480) // capped
+        XCTAssertEqual(scheduler.nextPollInterval(), 60) // 30 * 2^1
 
         // Now succeed
         scheduler.usageFetcher = { self.makeUsageData() }
@@ -519,7 +531,7 @@ final class PollSchedulerTests: XCTestCase {
         await scheduler.poll()
         await scheduler.poll()
         XCTAssertEqual(scheduler.errorCount, 3)
-        XCTAssertEqual(scheduler.nextPollInterval(), 480) // capped backoff
+        XCTAssertEqual(scheduler.nextPollInterval(), 120) // 30 * 2^2
 
         // Manual refresh should reset backoff regardless of outcome
         scheduler.usageFetcher = { self.makeUsageData() }
