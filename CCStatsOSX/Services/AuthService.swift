@@ -52,9 +52,24 @@ actor AuthService {
 
         if credentials.claudeAiOauth.isExpired {
             NSLog("[Auth] Token expired — refreshing...")
-            credentials = try await refreshToken(credentials)
-            cachedCredentials = credentials
-            NSLog("[Auth] Token refreshed successfully")
+            do {
+                credentials = try await refreshToken(credentials)
+                cachedCredentials = credentials
+                NSLog("[Auth] Token refreshed successfully")
+            } catch {
+                // Refresh failed — re-read Keychain in case Claude Code wrote fresh credentials
+                NSLog("[Auth] Refresh failed: %@ — reloading from Keychain", "\(error)")
+                if let fresh = try? KeychainService.readCredentials(),
+                   fresh.claudeAiOauth.refreshToken != credentials.claudeAiOauth.refreshToken {
+                    NSLog("[Auth] Found newer credentials in Keychain — retrying refresh")
+                    cachedCredentials = fresh
+                    credentials = try await refreshToken(fresh)
+                    cachedCredentials = credentials
+                    NSLog("[Auth] Token refreshed with Keychain credentials")
+                } else {
+                    throw error
+                }
+            }
         }
 
         return (credentials.claudeAiOauth.accessToken, credentials)
