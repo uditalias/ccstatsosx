@@ -18,7 +18,7 @@ class PollScheduler: ObservableObject {
     private(set) var errorCount = 0
     private var lastDataHash: Int?
     private(set) var lastPollTime: Date?
-    private(set) var isPolling = false
+    @Published private(set) var isPolling = false
     private let settings = AppSettings.shared
 
     /// Injectable usage fetcher for testing. Defaults to the real API service.
@@ -38,6 +38,10 @@ class PollScheduler: ObservableObject {
 
     func pollNow() {
         guard !isPolling else { return }
+        // Reset backoff so a manual refresh gets normal scheduling after
+        errorCount = 0
+        unchangedCount = 0
+        timer?.invalidate()
         Task { await poll() }
     }
 

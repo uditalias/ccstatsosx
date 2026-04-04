@@ -87,15 +87,31 @@ struct UsagePopover: View {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.primary.opacity(0.4))
-                        .rotationEffect(.degrees(0))
+                        .rotationEffect(.degrees(scheduler.isPolling ? 360 : 0))
+                        .animation(scheduler.isPolling ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default, value: scheduler.isPolling)
                 }
                 .buttonStyle(.borderless)
                 .focusable(false)
+                .disabled(scheduler.isPolling)
                 .help("Refresh")
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
             .padding(.bottom, 8)
+
+            if case .error(let msg) = scheduler.connectionState, scheduler.usageData != nil {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                    Text(msg)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.primary.opacity(0.6))
+                        .lineLimit(1)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 4)
+            }
 
             if let data = scheduler.usageData {
                 VStack(spacing: 0) {

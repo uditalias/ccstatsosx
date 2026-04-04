@@ -32,9 +32,8 @@ actor AuthService {
     private var cachedCredentials: KeychainCredentials?
     private var hasLoadedFromKeychain = false
 
-    /// Load credentials from Keychain exactly once. Call this at app startup.
+    /// Load credentials from Keychain. Called at app startup and on wake.
     func loadCredentials() throws {
-        guard !hasLoadedFromKeychain else { return }
         cachedCredentials = try KeychainService.readCredentials()
         hasLoadedFromKeychain = true
     }

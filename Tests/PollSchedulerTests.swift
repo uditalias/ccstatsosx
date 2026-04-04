@@ -508,4 +508,89 @@ final class PollSchedulerTests: XCTestCase {
         scheduler.stop()
         XCTAssertNil(scheduler.timer)
     }
+
+    // MARK: - pollNow resets backoff
+
+    func testPollNowResetsErrorCount() async {
+        let scheduler = makeScheduler { throw AuthError.noCredentials }
+
+        // Accumulate errors to trigger backoff
+        await scheduler.poll()
+        await scheduler.poll()
+        await scheduler.poll()
+        XCTAssertEqual(scheduler.errorCount, 3)
+        XCTAssertEqual(scheduler.nextPollInterval(), 480) // capped backoff
+
+        // Manual refresh should reset backoff regardless of outcome
+        scheduler.usageFetcher = { self.makeUsageData() }
+        scheduler.pollNow()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(scheduler.errorCount, 0)
+        XCTAssertEqual(scheduler.nextPollInterval(), 300) // back to normal
+    }
+
+    func testPollNowResetsUnchangedCount() async {
+        let data = makeUsageData()
+        let scheduler = makeScheduler { data }
+
+        // Build up unchangedCount to slow polling
+        for _ in 0..<11 {
+            await scheduler.poll()
+        }
+        XCTAssertGreaterThanOrEqual(scheduler.unchangedCount, 10)
+        XCTAssertEqual(scheduler.nextPollInterval(), 1500) // 25 min
+
+        // Manual refresh should reset the slowdown
+        scheduler.pollNow()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        // unchangedCount resets to 0, then poll sees same data → 1
+        XCTAssertLessThanOrEqual(scheduler.unchangedCount, 1)
+        XCTAssertEqual(scheduler.nextPollInterval(), 300)
+    }
+
+    func testPollNowInvalidatesPendingTimer() async {
+        let scheduler = makeScheduler { throw AuthError.noCredentials }
+
+        // Error poll schedules a backoff timer
+        await scheduler.poll()
+        let backoffTimer = scheduler.timer
+        XCTAssertNotNil(backoffTimer)
+        XCTAssertTrue(backoffTimer!.isValid)
+
+        // pollNow should cancel the pending backoff timer
+        scheduler.usageFetcher = { self.makeUsageData() }
+        scheduler.pollNow()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        // Old timer should be invalidated, replaced by a new one
+        XCTAssertFalse(backoffTimer!.isValid)
+        XCTAssertNotNil(scheduler.timer)
+        XCTAssertTrue(scheduler.timer!.isValid)
+    }
+
+    func testPollNowAfterManyErrorsRecoversFully() async {
+        var shouldFail = true
+        let scheduler = makeScheduler {
+            if shouldFail { throw UsageAPIError.httpError(429, "Too Many Requests") }
+            return self.makeUsageData()
+        }
+
+        // Simulate prolonged rate limiting
+        for _ in 0..<10 {
+            await scheduler.poll()
+        }
+        XCTAssertEqual(scheduler.errorCount, 10)
+        XCTAssertEqual(scheduler.connectionState, .error("Rate limited — retrying soon"))
+
+        // User clicks refresh after rate limit clears
+        shouldFail = false
+        scheduler.pollNow()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(scheduler.connectionState, .connected)
+        XCTAssertEqual(scheduler.errorCount, 0)
+        XCTAssertEqual(scheduler.nextPollInterval(), 300) // fully recovered
+    }
 }

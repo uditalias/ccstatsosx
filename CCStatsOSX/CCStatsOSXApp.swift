@@ -54,6 +54,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             scheduler.connectionState = .disconnected("Reconnecting...")
             await waitForNetwork()
+            try? await AuthService.shared.loadCredentials()
             scheduler.start()
         }
     }
@@ -71,6 +72,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 continuation.resume()
             }
             monitor.start(queue: queue)
+
+            // Timeout after 10 seconds — proceed anyway and let poll() handle errors
+            DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+                guard !box.resumed else { return }
+                box.resumed = true
+                monitor.cancel()
+                continuation.resume()
+            }
         }
     }
 }
