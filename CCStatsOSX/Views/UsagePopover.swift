@@ -158,6 +158,7 @@ struct UsagePopover: View {
                         Text(reason)
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.primary.opacity(0.4))
+                        retryButton
                     case .error(let msg):
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 28, weight: .light))
@@ -167,6 +168,7 @@ struct UsagePopover: View {
                             .foregroundColor(.primary.opacity(0.4))
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
+                        retryButton
                     case .connected:
                         ProgressView()
                             .controlSize(.small)
@@ -243,6 +245,25 @@ struct UsagePopover: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
         }
+    }
+
+    private var retryButton: some View {
+        Button(action: { scheduler.pollNow() }) {
+            HStack(spacing: 5) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 11, weight: .medium))
+                Text("Retry")
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .foregroundColor(claudeColor)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(claudeColor.opacity(0.1))
+            .clipShape(Capsule())
+        }
+        .buttonStyle(.borderless)
+        .focusable(false)
+        .disabled(scheduler.isPolling)
     }
 
     private var sectionDivider: some View {

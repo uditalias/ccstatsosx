@@ -582,6 +582,81 @@ final class PollSchedulerTests: XCTestCase {
         XCTAssertTrue(scheduler.timer!.isValid)
     }
 
+    // MARK: - pollNow credential reload recovery
+
+    func testPollNowRecoversFromDisconnectedState() async {
+        // Simulate: app starts with no Keychain credentials (Claude Code not installed/logged in)
+        var shouldFail = true
+        let scheduler = makeScheduler {
+            if shouldFail { throw KeychainError.itemNotFound }
+            return self.makeUsageData()
+        }
+
+        await scheduler.poll()
+        XCTAssertEqual(scheduler.connectionState, .disconnected("Claude Code not found"))
+        XCTAssertNil(scheduler.usageData)
+        XCTAssertEqual(scheduler.errorCount, 1)
+
+        // User logs in via Claude Code terminal — fresh credentials now available
+        shouldFail = false
+        scheduler.pollNow()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        // pollNow should recover: credential reload picks up fresh Keychain data
+        XCTAssertEqual(scheduler.connectionState, .connected)
+        XCTAssertNotNil(scheduler.usageData)
+        XCTAssertEqual(scheduler.errorCount, 0)
+    }
+
+    func testPollNowRecoversAfterProlongedDisconnection() async {
+        // Simulate: many polls fail because no credentials, then user re-logs in
+        let scheduler = makeScheduler { throw KeychainError.itemNotFound }
+
+        for _ in 0..<5 {
+            await scheduler.poll()
+        }
+        XCTAssertEqual(scheduler.errorCount, 5)
+        XCTAssertEqual(scheduler.connectionState, .disconnected("Claude Code not found"))
+
+        // User re-logs in — fresh credentials available
+        scheduler.usageFetcher = { self.makeUsageData(fiveHourUtil: 42, sevenDayUtil: 15) }
+        scheduler.pollNow()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(scheduler.connectionState, .connected)
+        XCTAssertEqual(scheduler.usageData?.fiveHour?.utilization, 42)
+        XCTAssertEqual(scheduler.errorCount, 0)
+        // Backoff should be fully reset to normal base interval
+        XCTAssertEqual(scheduler.nextPollInterval(), TimeInterval(AppSettings.shared.pollInterval))
+    }
+
+    func testPollNowRecoversFromAuthRefreshFailure() async {
+        // Simulate: token expired, refresh keeps failing (stale refresh token)
+        var shouldFail = true
+        let scheduler = makeScheduler {
+            if shouldFail { throw AuthError.refreshFailed("HTTP 401") }
+            return self.makeUsageData()
+        }
+
+        await scheduler.poll()
+        await scheduler.poll()
+        XCTAssertEqual(scheduler.errorCount, 2)
+        if case .error(let msg) = scheduler.connectionState {
+            XCTAssertTrue(msg.contains("Auth"))
+        } else {
+            XCTFail("Expected error state")
+        }
+
+        // User re-logs in via terminal — pollNow forces credential reload
+        shouldFail = false
+        scheduler.pollNow()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertEqual(scheduler.connectionState, .connected)
+        XCTAssertNotNil(scheduler.usageData)
+        XCTAssertEqual(scheduler.errorCount, 0)
+    }
+
     func testPollNowAfterManyErrorsRecoversFully() async {
         var shouldFail = true
         let scheduler = makeScheduler {

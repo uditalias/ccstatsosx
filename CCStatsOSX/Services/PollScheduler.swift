@@ -46,7 +46,12 @@ class PollScheduler: ObservableObject {
         errorCount = 0
         unchangedCount = 0
         timer?.invalidate()
-        Task { await poll() }
+        Task {
+            // Force Keychain reload so we pick up fresh credentials
+            // (e.g. after the user re-logged in via Claude Code terminal)
+            await AuthService.shared.reloadCredentials()
+            await poll()
+        }
     }
 
     func poll() async {

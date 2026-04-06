@@ -17,5 +17,5 @@ struct OAuthTokens: Codable {
 
 struct KeychainCredentials: Codable {
     let claudeAiOauth: OAuthTokens
-    let organizationUuid: String
+    let organizationUuid: String?
 }

@@ -121,6 +121,22 @@ final class KeychainCredentialsTests: XCTestCase {
         XCTAssertEqual(creds.organizationUuid, "org-uuid-123")
     }
 
+    func testKeychainCredentialsDecodingWithoutOrganizationUuid() throws {
+        let json = """
+        {
+            "claudeAiOauth": {
+                "accessToken": "acc",
+                "refreshToken": "ref",
+                "expiresAt": 1718456400000
+            }
+        }
+        """
+        let data = json.data(using: .utf8)!
+        let creds = try JSONDecoder().decode(KeychainCredentials.self, from: data)
+        XCTAssertEqual(creds.claudeAiOauth.accessToken, "acc")
+        XCTAssertNil(creds.organizationUuid)
+    }
+
     // MARK: - KeychainCredentials roundtrip
 
     func testKeychainCredentialsRoundtrip() throws {

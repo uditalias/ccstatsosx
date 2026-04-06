@@ -7,6 +7,10 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 cd "$PROJECT_DIR"
 
+echo "Running tests..."
+swift test
+echo "Tests passed!"
+
 echo "Building release..."
 swift build -c release
 

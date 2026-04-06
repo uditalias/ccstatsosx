@@ -38,6 +38,15 @@ actor AuthService {
         hasLoadedFromKeychain = true
     }
 
+    /// Force re-reading credentials from Keychain, discarding the in-memory cache.
+    /// Call this before a manual refresh so the app picks up fresh credentials
+    /// written by Claude Code (e.g. after the user re-logs in).
+    func reloadCredentials() {
+        NSLog("[Auth] Forcing Keychain reload (clearing cache)")
+        cachedCredentials = nil
+        hasLoadedFromKeychain = false
+    }
+
     func getValidToken() async throws -> (token: String, credentials: KeychainCredentials) {
         // Ensure we've loaded from Keychain
         if !hasLoadedFromKeychain {
@@ -61,11 +70,17 @@ actor AuthService {
                 NSLog("[Auth] Refresh failed: %@ — reloading from Keychain", "\(error)")
                 if let fresh = try? KeychainService.readCredentials(),
                    fresh.claudeAiOauth.refreshToken != credentials.claudeAiOauth.refreshToken {
-                    NSLog("[Auth] Found newer credentials in Keychain — retrying refresh")
                     cachedCredentials = fresh
-                    credentials = try await refreshToken(fresh)
-                    cachedCredentials = credentials
-                    NSLog("[Auth] Token refreshed with Keychain credentials")
+                    // If the fresh credentials already have a valid token, use them directly
+                    if !fresh.claudeAiOauth.isExpired {
+                        NSLog("[Auth] Fresh Keychain credentials have a valid token — using directly")
+                        credentials = fresh
+                    } else {
+                        NSLog("[Auth] Fresh Keychain credentials expired — retrying refresh")
+                        credentials = try await refreshToken(fresh)
+                        cachedCredentials = credentials
+                    }
+                    NSLog("[Auth] Recovered with Keychain credentials")
                 } else {
                     throw error
                 }
