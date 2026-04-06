@@ -48,16 +48,24 @@ struct SettingsView: View {
                     Toggle("Cowork weekly", isOn: $settings.showCowork)
                 }
 
-                Section("Polling") {
+                Section {
                     Picker("Refresh interval", selection: $settings.pollInterval) {
                         Text("5 minutes").tag(300)
                         Text("10 minutes").tag(600)
                         Text("15 minutes").tag(900)
                         Text("30 minutes").tag(1800)
                     }
+                    Text("The usage API has a strict rate limit (~5 requests per token). A longer interval helps avoid HTTP 429 errors.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } header: {
+                    Text("Polling")
                 }
 
-                Section("Thresholds") {
+                Section {
+                    Text("Get notified when your usage reaches these levels. Warnings appear as macOS notifications.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                     HStack {
                         Text("Warning at")
                         Spacer()
@@ -74,6 +82,8 @@ struct SettingsView: View {
                             .textFieldStyle(.roundedBorder)
                         Text("%")
                     }
+                } header: {
+                    Text("Thresholds")
                 }
 
                 Section("General") {
@@ -92,7 +102,7 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
         }
-        .frame(width: 320, height: 450)
+        .frame(width: 320, height: 550)
         .background(.ultraThinMaterial)
     }
 }

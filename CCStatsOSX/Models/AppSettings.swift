@@ -15,7 +15,7 @@ enum TimeDisplayMode: String, CaseIterable {
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
-    @AppStorage("pollInterval") var pollInterval: Int = 300 // 5 minutes default
+    @AppStorage("pollInterval") var pollInterval: Int = 900 // 15 minutes default
     @AppStorage("showFiveHourPercent") var showFiveHourPercent: Bool = true
     @AppStorage("showSevenDayPercent") var showSevenDayPercent: Bool = true
     @AppStorage("showCountdown") var showCountdown: Bool = true

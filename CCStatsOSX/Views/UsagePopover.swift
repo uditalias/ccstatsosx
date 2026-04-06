@@ -311,7 +311,7 @@ struct UsagePopover: View {
                     Divider().padding(.vertical, 4)
                 }
 
-                sectionHeader("Refresh")
+                sectionHeader("Refresh", description: "The usage API has a strict rate limit. A longer interval helps avoid errors.")
                 settingsPickerRow("Interval", selection: $settings.pollInterval) {
                     Text("5 minutes").tag(300)
                     Text("10 minutes").tag(600)
@@ -321,7 +321,7 @@ struct UsagePopover: View {
 
                 Divider().padding(.vertical, 4)
 
-                sectionHeader("Thresholds")
+                sectionHeader("Thresholds", description: "Get notified when your usage reaches these levels.")
                 settingsSliderRow("Warning", value: $settings.warningThreshold, range: 50...90, color: .orange)
                 settingsSliderRow("Critical", value: $settings.criticalThreshold, range: 70...100, color: .red)
 
@@ -346,15 +346,23 @@ struct UsagePopover: View {
 
     // MARK: - Settings Helpers
 
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title.uppercased())
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundColor(.primary.opacity(0.4))
-            .tracking(0.5)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 2)
+    private func sectionHeader(_ title: String, description: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title.uppercased())
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.primary.opacity(0.4))
+                .tracking(0.5)
+            if let description {
+                Text(description)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 2)
     }
 
     private func settingsToggleRow(_ label: String, isOn: Binding<Bool>) -> some View {
@@ -439,4 +447,5 @@ struct SubscriptionLabel: View {
             }
     }
 }
+
 
