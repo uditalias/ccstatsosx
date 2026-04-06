@@ -294,8 +294,8 @@ final class PollSchedulerTests: XCTestCase {
 
     func testNextPollIntervalNormal() {
         let scheduler = PollScheduler()
-        // Default pollInterval is 300 (5 min), errorCount=0, unchangedCount=0
-        XCTAssertEqual(scheduler.nextPollInterval(), 300)
+        // Default pollInterval is 900 (15 min), errorCount=0, unchangedCount=0
+        XCTAssertEqual(scheduler.nextPollInterval(), 900)
     }
 
     func testNextPollIntervalWithErrors() async {
@@ -331,8 +331,8 @@ final class PollSchedulerTests: XCTestCase {
             await scheduler.poll()
         }
         XCTAssertGreaterThanOrEqual(scheduler.unchangedCount, 5)
-        // baseInterval * 2 = 600
-        XCTAssertEqual(scheduler.nextPollInterval(), 600)
+        // baseInterval * 2 = 1800
+        XCTAssertEqual(scheduler.nextPollInterval(), 1800)
     }
 
     func testNextPollIntervalSlowsMoreForVeryUnchangedData() async {
@@ -344,8 +344,8 @@ final class PollSchedulerTests: XCTestCase {
             await scheduler.poll()
         }
         XCTAssertGreaterThanOrEqual(scheduler.unchangedCount, 10)
-        // baseInterval * 5 = 1500
-        XCTAssertEqual(scheduler.nextPollInterval(), 1500)
+        // baseInterval * 5 = 4500
+        XCTAssertEqual(scheduler.nextPollInterval(), 4500)
     }
 
     func testBackoffResetAfterSuccess() async {
@@ -360,7 +360,7 @@ final class PollSchedulerTests: XCTestCase {
         scheduler.usageFetcher = { self.makeUsageData() }
         await scheduler.poll()
         XCTAssertEqual(scheduler.errorCount, 0)
-        XCTAssertEqual(scheduler.nextPollInterval(), 300) // back to normal
+        XCTAssertEqual(scheduler.nextPollInterval(), 900) // back to normal
     }
 
     // MARK: - Sleep/wake simulation
@@ -539,7 +539,7 @@ final class PollSchedulerTests: XCTestCase {
         try? await Task.sleep(nanoseconds: 100_000_000)
 
         XCTAssertEqual(scheduler.errorCount, 0)
-        XCTAssertEqual(scheduler.nextPollInterval(), 300) // back to normal
+        XCTAssertEqual(scheduler.nextPollInterval(), 900) // back to normal
     }
 
     func testPollNowResetsUnchangedCount() async {
@@ -551,7 +551,7 @@ final class PollSchedulerTests: XCTestCase {
             await scheduler.poll()
         }
         XCTAssertGreaterThanOrEqual(scheduler.unchangedCount, 10)
-        XCTAssertEqual(scheduler.nextPollInterval(), 1500) // 25 min
+        XCTAssertEqual(scheduler.nextPollInterval(), 4500) // 75 min
 
         // Manual refresh should reset the slowdown
         scheduler.pollNow()
@@ -559,7 +559,7 @@ final class PollSchedulerTests: XCTestCase {
 
         // unchangedCount resets to 0, then poll sees same data → 1
         XCTAssertLessThanOrEqual(scheduler.unchangedCount, 1)
-        XCTAssertEqual(scheduler.nextPollInterval(), 300)
+        XCTAssertEqual(scheduler.nextPollInterval(), 900)
     }
 
     func testPollNowInvalidatesPendingTimer() async {
@@ -678,6 +678,6 @@ final class PollSchedulerTests: XCTestCase {
 
         XCTAssertEqual(scheduler.connectionState, .connected)
         XCTAssertEqual(scheduler.errorCount, 0)
-        XCTAssertEqual(scheduler.nextPollInterval(), 300) // fully recovered
+        XCTAssertEqual(scheduler.nextPollInterval(), 900) // fully recovered
     }
 }
